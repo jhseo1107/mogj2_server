@@ -7,6 +7,7 @@ val logback_version: String by project
 val exposed_version: String by project
 val mariadb_version: String by project
 val hasher_version: String by project
+val commonslang_version: String by project
 
 plugins {
     application
@@ -42,6 +43,8 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-dao:$exposed_version")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposed_version")
     implementation("org.mariadb.jdbc:mariadb-java-client:$mariadb_version")
+    implementation("org.apache.commons:commons-lang3:$commonslang_version")
+
 }
 
 kotlin.sourceSets["main"].kotlin.srcDirs("src")

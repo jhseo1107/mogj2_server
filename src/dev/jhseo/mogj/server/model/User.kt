@@ -2,11 +2,11 @@ package dev.jhseo.mogj.server.model
 
 import dev.jhseo.hasher.HasherMethod
 import dev.jhseo.hasher.hash
+import dev.jhseo.mogj.server.AuthFailException
 import dev.jhseo.mogj.server.db.Users
 import org.apache.commons.lang3.RandomStringUtils
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
-import java.lang.RuntimeException
 import java.time.LocalDateTime
 
 class User(val id: Int) {
@@ -25,6 +25,7 @@ class User(val id: Int) {
     init {
         exposedObj = Users.select { Users.id eq id }
         check(transaction { exposedObj.count() } != 0.toLong())
+
         kakaoId = transaction { exposedObj.map { it[Users.kakaoId] }.first() }
         nickname = transaction { exposedObj.map { it[Users.nickname] }.first() }
         avatar = transaction { exposedObj.map { it[Users.avatar] }.first() }
@@ -46,7 +47,7 @@ class User(val id: Int) {
         val myId = this.id
         if (to != null) {
             transaction {
-                Users.update({ Users.id eq myId }) { it[column] = to; it[Users.updated_at] = LocalDateTime.now() }
+                Users.update({ Users.id eq myId }) { it[column] = to; it[updated_at] = LocalDateTime.now() }
             }
         }
         return User(myId)
@@ -72,13 +73,11 @@ class User(val id: Int) {
                     it[Users.avatar] = avatar
                     it[Users.password] = password
                     it[Users.token] = token
-                    it[Users.created_at] = LocalDateTime.now()
-                    it[Users.updated_at] = LocalDateTime.now()
+                    it[created_at] = LocalDateTime.now()
+                    it[updated_at] = LocalDateTime.now()
                 }
             }
             return User(Users.select { Users.kakaoId eq kakaoId })
         }
     }
 }
-
-class AuthFailException : RuntimeException()

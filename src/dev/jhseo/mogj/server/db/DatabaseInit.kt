@@ -20,6 +20,9 @@ fun initDb() {
 
         SchemaUtils.let {
             it.create(Users)
+            it.create(Houses)
+            it.create(ParentsHouses)
+            it.create(ConnectedParentsHouses)
         }
     }
 }

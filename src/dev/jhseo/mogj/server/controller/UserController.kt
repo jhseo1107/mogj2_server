@@ -3,7 +3,7 @@ package dev.jhseo.mogj.server.controller
 import dev.jhseo.hasher.HasherMethod
 import dev.jhseo.hasher.hash
 import dev.jhseo.mogj.server.db.Users
-import dev.jhseo.mogj.server.model.AuthFailException
+import dev.jhseo.mogj.server.AuthFailException
 import dev.jhseo.mogj.server.model.User
 import io.ktor.application.*
 import io.ktor.http.*
@@ -11,7 +11,6 @@ import io.ktor.request.*
 import io.ktor.response.*
 import io.ktor.routing.*
 import org.apache.commons.lang3.RandomStringUtils
-import org.jetbrains.exposed.sql.Column
 import java.lang.IllegalStateException
 import java.lang.NumberFormatException
 
@@ -21,8 +20,8 @@ fun Route.userRoutes() {
             val id: Int
             val user: User
             try {
-                id = call.parameters["id"]!!.toInt()
-                user = User(id)
+                id = call.parameters["id"]!!.toInt() // NumberFormatException
+                user = User(id) // IllegalStateException by check
             } catch (e: NumberFormatException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@get
@@ -38,7 +37,7 @@ fun Route.userRoutes() {
                     "avatar" to user.avatar,
                     "isParent" to user.isParent,
                     "isChild" to user.isChild,
-                    "house" to user.house,
+                    "myHouse" to user.house,
                     "point" to user.point
                 )
             )
@@ -49,9 +48,9 @@ fun Route.userRoutes() {
             val user: User
             val password: String
             try {
-                id = call.parameters["id"]!!.toInt()
-                user = User(id)
-                password = params["password"]!!
+                id = call.parameters["id"]!!.toInt() // NumberFormatException
+                user = User(id) // IllegalStateException by check
+                password = params["password"]!! // NullPointerException
             } catch (e: NumberFormatException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@get
@@ -69,16 +68,16 @@ fun Route.userRoutes() {
                 )
             )
         }
-        get("/{id}/isvalid") {
+        get("/{id}/is_valid") {
             val params = call.request.queryParameters
             val id: Int
             val user: User
             val token: String
             try {
-                id = call.parameters["id"]!!.toInt()
-                user = User(id)
-                token = params["token"]!!
-                user.auth(token)
+                id = call.parameters["id"]!!.toInt() // NumberFormatException
+                user = User(id) // IllegalStateException by check
+                token = params["token"]!! // NullPointerException
+                user.auth(token) // AuthFailException
             } catch (e: NumberFormatException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@get
@@ -103,10 +102,10 @@ fun Route.userRoutes() {
             val password: String
 
             try {
-                kakaoId = params["kakaoId"]!!.toLong()
-                nickname = params["nickname"]!!
-                avatar = params["avatar"]!!
-                password = params["password"]!!.hash(HasherMethod.SHA512)
+                kakaoId = params["kakaoId"]!!.toLong() // NumberFormatException, NullPointerException
+                nickname = params["nickname"]!! // NullPointerException
+                avatar = params["avatar"]!! // NullPointerException
+                password = params["password"]!!.hash(HasherMethod.SHA512) // NullPointerException
             } catch (e: NullPointerException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@post
@@ -138,29 +137,29 @@ fun Route.userRoutes() {
             val house: Int?
 
             try {
-                id = call.parameters["id"]!!.toInt()
-                user = User(id)
+                id = call.parameters["id"]!!.toInt() // NumberFormatException
+                user = User(id) // IllegalStateException by check
 
-                token = params["token"]!!
-                user.auth(token)
+                token = params["token"]!! // NullPointerException
+                user.auth(token) // AuthFailException
 
                 nickname = params["nickname"]
                 avatar = params["avatar"]
                 password = params["password"]?.hash(HasherMethod.SHA512)
                 isParent = params["isParent"]?.toBoolean()
                 isChild = params["isChild"]?.toBoolean()
-                house = params["house"]?.toInt()
+                house = params["house"]?.toInt() // NumberFormatException
             } catch (e: NumberFormatException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@patch
             } catch (e: NullPointerException) {
                 call.response.status(HttpStatusCode.BadRequest)
                 return@patch
-            } catch (e: IllegalStateException) {
-                call.response.status(HttpStatusCode.NotFound)
-                return@patch
             } catch (e: AuthFailException) {
                 call.response.status(HttpStatusCode.Forbidden)
+                return@patch
+            } catch (e: IllegalStateException) {
+                call.response.status(HttpStatusCode.NotFound)
                 return@patch
             }
 

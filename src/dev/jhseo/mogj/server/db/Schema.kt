@@ -17,3 +17,24 @@ object Users : IntIdTable(name = "users") {
     val created_at = datetime(name = "created_at")
     val updated_at = datetime(name = "updated_at")
 }
+
+object Houses : IntIdTable(name = "houses") {
+    val name = text(name = "name")
+    val avatar = text(name = "avatar").nullable()
+
+    val created_at = datetime(name = "created_at")
+    val updated_at = datetime(name = "updated_at")
+}
+
+object ParentsHouses : IntIdTable(name = "parents_houses") { //For Parents Only
+    val parentId = integer(name = "parent_id")
+    val houseId = integer(name = "house_id")
+
+    val created_at = datetime(name = "created_at")
+    val updated_at = datetime(name = "updated_at")
+}
+
+object ConnectedParentsHouses : IntIdTable(name = "connected_parents_houses") {
+    val parentId = integer(name = "parent_id")
+    val houseId = integer(name = "house_id")
+}

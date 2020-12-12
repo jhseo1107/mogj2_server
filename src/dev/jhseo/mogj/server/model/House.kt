@@ -8,17 +8,29 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import java.time.LocalDateTime
 
-class House(val id: Int) {
-    private val exposedObj: Query
+data class House(val id: Int) {
+    @Transient private val exposedObj: Query
 
     val name: String
     val avatar: String?
+    val createdAt: LocalDateTime
+    val updatedAt: LocalDateTime
+    val parents: List<Int>
+    val members: List<Int>
 
     init {
         exposedObj = Houses.select { Houses.id eq id }
-        check(transaction { exposedObj.count() } != 0.toLong())
+        check(transaction { exposedObj.count() } != 0L)
         name = transaction { exposedObj.map { it[Houses.name] }.first() }
         avatar = transaction { exposedObj.map { it[Houses.avatar] }.firstOrNull() }
+        createdAt = transaction { exposedObj.map { it[Houses.created_at] }.first() }
+        updatedAt = transaction { exposedObj.map { it[Houses.updated_at] }.first() }
+        parents = transaction {
+            ParentsHouses.select { ParentsHouses.houseId eq this@House.id }.map { it[ParentsHouses.parentId] }
+        }
+        members = transaction {
+            Users.select { Users.house eq this@House.id }.map { it[Users.id].value }
+        }
     }
 
     constructor (query: Query) : this(
@@ -37,23 +49,9 @@ class House(val id: Int) {
         return House(myId)
     }
 
-    fun members(): List<Int> {
-        val myId = this.id
-        return transaction {
-            Users.select{Users.house eq myId}.map{it[Users.id].value}
-        }
-    }
-
-    fun parents(): List<Int> {
-        val myId = this.id
-        return transaction {
-            ParentsHouses.select{ParentsHouses.houseId eq myId}.map{it[ParentsHouses.parentId]}
-        }
-    }
-
     fun addParent(parentId: Int) {
         val myId = this.id
-        if(!User(parentId).isParent) throw NotParentException()
+        if (!User(parentId).isParent) throw NotParentException()
         transaction {
             ParentsHouses.insert {
                 it[houseId] = myId
@@ -66,13 +64,14 @@ class House(val id: Int) {
 
     companion object {
         fun write(name: String, avatar: String?): House {
-            transaction { Houses.insert {
-                it[Houses.name] = name
-                it[Houses.avatar] = avatar
-                it[created_at] = LocalDateTime.now()
-                it[updated_at] = LocalDateTime.now()
-            } }
-            return House(transaction{Houses.selectAll().count()}.toInt())
+            return House(transaction {
+                Houses.insertAndGetId {
+                    it[Houses.name] = name
+                    it[Houses.avatar] = avatar
+                    it[created_at] = LocalDateTime.now()
+                    it[updated_at] = LocalDateTime.now()
+                }.value
+            })
         }
     }
 }

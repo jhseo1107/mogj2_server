@@ -4,3 +4,4 @@ import kotlin.RuntimeException
 
 class AuthFailException : RuntimeException()
 class NotParentException: RuntimeException()
+class NotAccessibleException: RuntimeException()

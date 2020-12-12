@@ -4,6 +4,7 @@ import dev.jhseo.mogj.server.db.ConnectedParentsHouses
 import dev.jhseo.mogj.server.db.Houses
 import dev.jhseo.mogj.server.db.ParentsHouses
 import dev.jhseo.mogj.server.db.Users
+import dev.jhseo.mogj.server.model.User
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -15,10 +16,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 // Use Bipartite Matching
 class ParentMatcher {
-    var graph: Array<MutableList<Int>> = emptyArray()
-    var currentConnection: Array<List<Int>> = emptyArray()
-    var vt: Array<Boolean> = arrayOf(false)
-    var conn: Array<Int> = arrayOf(0) // conn[parentId] -> houseId
+    var graph: Array<MutableList<Int>> = Array(transaction{Houses.selectAll().count()}.toInt() + 1) {MutableList(transaction{Users.select{Users.isParent eq true}.count()}.toInt() + 1) {0} }
+    var currentConnection: Array<MutableList<Int>> = Array(transaction{Houses.selectAll().count()}.toInt() + 1) {MutableList(transaction{Users.select{Users.isParent eq true}.count()}.toInt() + 1) {0} }
+    var vt: Array<Boolean> = Array(transaction{Users.selectAll().count()}.toInt() + 1) {false}
+    var conn: Array<Int> = Array(transaction{Users.selectAll().count()}.toInt() + 1) {0} // conn[parentId] -> houseId
 
     fun run() {
         for (i in 1..transaction { Houses.selectAll().count() }.toInt()) {
@@ -30,7 +31,7 @@ class ParentMatcher {
             currentConnection[i] = transaction {
                 ConnectedParentsHouses.select { ConnectedParentsHouses.houseId eq i }
                     .map { it[ConnectedParentsHouses.parentId] }
-            }
+            }.toMutableList()
         }
 
         transaction {
@@ -38,14 +39,14 @@ class ParentMatcher {
             SchemaUtils.create(ConnectedParentsHouses)
         }
 
-        for (i in 1..graph.size) {
+        for (i in 1 until graph.size) {
             currentConnection[i].forEach {
                 if (it in graph[i]) graph[i].remove(it)
             }
         }
 
-        for (i in 1..graph.size) {
-            vt = arrayOf(false)
+        for (i in 1 until graph.size) {
+            vt = Array(transaction{Users.selectAll().count()}.toInt()) {false}
             dfs(i)
         }
 
@@ -61,7 +62,8 @@ class ParentMatcher {
         transaction {
             SchemaUtils.drop(ConnectedParentsHouses)
             SchemaUtils.create(ConnectedParentsHouses)
-            for(i in 1..conn.size) {
+            for(i in 1 until conn.size) {
+                if(conn[i] == 0) continue
                 ConnectedParentsHouses.insert {
                     it[houseId] = conn[i]
                     it[parentId] = i

@@ -1,7 +1,6 @@
 package dev.jhseo.mogj.server
 
-import dev.jhseo.mogj.server.controller.houseRoutes
-import dev.jhseo.mogj.server.controller.userRoutes
+import dev.jhseo.mogj.server.controller.*
 import dev.jhseo.mogj.server.db.initDb
 import dev.jhseo.mogj.server.procedures.PrntMtchRunner
 import io.ktor.application.*
@@ -11,6 +10,7 @@ import io.ktor.http.content.*
 import io.ktor.sessions.*
 import io.ktor.features.*
 import io.ktor.gson.*
+import io.ktor.http.*
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -38,12 +38,6 @@ fun Application.module(testing: Boolean = false) {
         PrntMtchRunner.run()
     }
 
-    install(Sessions) {
-        cookie<MySession>("MY_SESSION") {
-            cookie.extensions["SameSite"] = "lax"
-        }
-    }
-
     install(ContentNegotiation) {
         gson {
         }
@@ -54,6 +48,15 @@ fun Application.module(testing: Boolean = false) {
             call.respond(mapOf("android" to "1.0.0"))
         }
 
+        get("/runParentMatcher") {
+            if(testing) {
+                PrntMtchRunner.run()
+                call.response.status(HttpStatusCode.OK)
+                return@get
+            }
+            call.response.status(HttpStatusCode.Forbidden)
+        }
+
         static("/static") {
             resources("static")
         }
@@ -61,8 +64,9 @@ fun Application.module(testing: Boolean = false) {
         // Controllers from dev.jhseo.mogj.server.controller
         userRoutes()
         houseRoutes()
+        inviteRoutes()
+        postRoutes()
+        commentRoutes()
     }
 }
-
-data class MySession(val count: Int = 0)
 

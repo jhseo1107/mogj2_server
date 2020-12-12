@@ -23,6 +23,10 @@ fun initDb() {
             it.create(Houses)
             it.create(ParentsHouses)
             it.create(ConnectedParentsHouses)
+            it.create(Invites)
+            it.create(Posts)
+            it.create(Comments)
+            it.create(PostsUsersLikes)
         }
     }
 }

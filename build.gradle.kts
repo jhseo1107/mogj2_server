@@ -12,6 +12,7 @@ val commonslang_version: String by project
 plugins {
     application
     kotlin("jvm") version "1.4.10"
+    id("com.github.johnrengelman.shadow") version "4.0.4"
 }
 
 group = "dev.jhseo"

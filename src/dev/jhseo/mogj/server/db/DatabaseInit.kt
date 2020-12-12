@@ -9,7 +9,7 @@ import org.mariadb.jdbc.Driver
 
 fun initDb() {
     Database.connect(
-        url = "jdbc:mysql://localhost:3306/mogj?serverTimeZone=Asia/Seoul&characterEncoding=utf8&useUnicode=true",
+        url = "jdbc:mysql://${System.getenv("DBADDRESS") ?: "localhost"}:3306/mogj?serverTimeZone=Asia/Seoul&characterEncoding=utf8&useUnicode=true",
         driver = Driver::class.java.name,
         user = "dockhyub",
         password = System.getenv("DBPASSWORD")
